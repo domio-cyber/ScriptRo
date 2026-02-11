@@ -1,31 +1,25 @@
--- Stability Check
-print("ScriptRo: Attempting to load stable library...")
+print("ScriptRo: Attempting direct unlock without UI...")
 
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("ScriptRo: Ghost Bart", "Midnight")
+local skinName = "Ghost Bart"
+local rs = game:GetService("ReplicatedStorage")
+local events = rs:WaitForChild("Events", 5) -- Waits 5 seconds for the folder
 
--- Create the Tab
-local Tab = Window:NewTab("Skins")
-local Section = Tab:NewSection("Bart Unlocker")
-
-Section:NewButton("Unlock & Equip Ghost Bart", "Unlocks and wears it instantly", function()
-    local skinName = "Ghost Bart"
-    local events = game:GetService("ReplicatedStorage"):WaitForChild("Events")
-    
+if events then
     -- 1. PURCHASE (The permanent save)
     events.purchaseSkin:FireServer(skinName)
+    print("ScriptRo: Purchase signal sent!")
     
-    -- 2. LOCAL UNLOCK (Fixes the GUI)
+    -- 2. LOCAL UNLOCK (Updates your folder)
     local player = game.Players.LocalPlayer
     local skinValue = player:WaitForChild("skins"):WaitForChild("Bart"):FindFirstChild(skinName)
     if skinValue then
         skinValue.Value = "unlocked"
+        print("ScriptRo: Folder value set to unlocked!")
     end
     
-    -- 3. EQUIP (Wears it now)
+    -- 3. EQUIP (Wears it)
     events.equipSkin:FireServer(skinName)
-    
-    print("ScriptRo: Ghost Bart Activated!")
-end)
-
-print("ScriptRo: GUI Loaded successfully!")
+    print("ScriptRo: Equip signal sent!")
+else
+    warn("ScriptRo: Could not find the Events folder in ReplicatedStorage!")
+end
