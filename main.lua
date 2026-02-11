@@ -1,73 +1,54 @@
 local player = game.Players.LocalPlayer
-local runService = game:GetService("RunService")
 local targetSkin = "Ghost Bart"
 
--- 1. THE "UNLOCKER" (Data)
--- This loop forces the game to think you own it 60 times a second
+-- 1. Persistent Value Unlocker
 task.spawn(function()
-    while task.wait(0.1) do
+    while task.wait(0.5) do
         pcall(function()
-            local skinValue = player:WaitForChild("skins"):WaitForChild("Bart"):FindFirstChild(targetSkin)
-            if skinValue and skinValue.Value ~= "unlocked" then
-                skinValue.Value = "unlocked"
+            local skinVal = player:WaitForChild("skins"):WaitForChild("Bart"):FindFirstChild(targetSkin)
+            if skinVal and skinVal.Value ~= "unlocked" then
+                skinVal.Value = "unlocked"
             end
         end)
     end
 end)
 
--- 2. THE "GUI FIXER" (Visuals)
--- This forces the menu to show "EQUIP" instead of "BUY"
-runService.RenderStepped:Connect(function()
+-- 2. Grid Icon Hijacker (Makes it selectable)
+local function refreshIcons()
     pcall(function()
-        local skinsUI = player.PlayerGui.main.Seperate.Skins
-        
-        -- Fix the big button at the bottom
-        local buyBtn = skinsUI.Selected:FindFirstChild("Buy")
-        local priceLabel = skinsUI.Selected:FindFirstChild("TextLabel")
-        
-        if buyBtn and buyBtn.Visible then
-            buyBtn.Text = "EQUIP"
-            buyBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 0) -- Green
-        end
-        
-        if priceLabel and priceLabel.Text ~= "OWNED" then
-            priceLabel.Text = "OWNED"
-            priceLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        end
-        
-        -- Fix the little icon in the grid
-        for _, icon in pairs(skinsUI.Barts:GetChildren()) do
+        local scrollingFrame = player.PlayerGui.main.Seperate.Skins.Barts
+        for _, icon in pairs(scrollingFrame:GetChildren()) do
+            -- Look for the Ghost Bart icon
             if icon.Name == targetSkin or (icon:FindFirstChild("Title") and icon.Title.Text == targetSkin) then
+                
+                -- Hide the Lock/Price overlays so you can see the skin
                 if icon:FindFirstChild("Lock") then icon.Lock.Visible = false end
                 if icon:FindFirstChild("Price") then icon.Price.Visible = false end
+                if icon:FindFirstChild("Locked") then icon.Locked.Visible = false end
+                
+                -- Visual feedback that it's unlocked
+                icon.BackgroundColor3 = Color3.fromRGB(85, 255, 127) -- Light Green
             end
         end
     end)
-end)
-
--- 3. THE "EQUIPPER" (Function)
--- Makes the 'Buy' button actually equip the skin
-local function setupButton()
-    local buyBtn = player.PlayerGui.main.Seperate.Skins.Selected:FindFirstChild("Buy")
-    if buyBtn then
-        -- Disconnect old connections to stop it from trying to buy
-        for _, conn in pairs(getconnections(buyBtn.MouseButton1Click)) do
-            conn:Disable()
-        end
-        
-        -- Add our new connection
-        buyBtn.MouseButton1Click:Connect(function()
-            game:GetService("ReplicatedStorage").Events.equipSkin:FireServer(targetSkin)
-            print("Force-Equipped " .. targetSkin)
-        end)
-    end
 end
 
--- Run the button setup every few seconds in case the menu refreshes
+-- 3. The "Selection" panel Fixer (Hides the Buy button if it appears)
 task.spawn(function()
-    while task.wait(1) do
-        pcall(setupButton)
+    while task.wait(0.2) do
+        refreshIcons()
+        pcall(function()
+            local selectedPanel = player.PlayerGui.main.Seperate.Skins.Selected
+            local buyBtn = selectedPanel:FindFirstChild("Buy")
+            local priceTxt = selectedPanel:FindFirstChild("TextLabel")
+            
+            -- If Ghost Bart is selected, we hide the Buy button so it doesn't block you
+            if buyBtn and buyBtn.Visible then
+                buyBtn.Visible = false
+                if priceTxt then priceTxt.Text = "OWNED" end
+            end
+        end)
     end
 end)
 
-print("--- GHOST BART PERMANENTLY UNLOCKED (CLIENT-SIDE) ---")
+print("ScriptRo: Selection Mode Active. Just click the Ghost Bart icon in the grid!")
