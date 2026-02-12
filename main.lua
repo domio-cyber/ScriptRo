@@ -1,13 +1,11 @@
 local player = game.Players.LocalPlayer
 local target = "Ghost Bart"
-
--- Path to the Store UI you found
 local storeSkins = player.PlayerGui.main.Seperate.Store.frame.Frame.Skins
 local invSkins = player.PlayerGui.main.Seperate.Inventory.frame.Frame.Skins
 
-print("--- ScriptRo: STORE-MIMIC BYPASS ACTIVE ---")
+print("--- ScriptRo: QUIDZ LAG-BYPASS ACTIVE ---")
 
--- 1. LOCK LOCAL VALUE TO 'OWNED'
+-- 1. LOCK VALUE TO 'owned'
 task.spawn(function()
     while true do
         pcall(function()
@@ -17,9 +15,8 @@ task.spawn(function()
     end
 end)
 
--- 2. CREATE THE STORE-BUY INTERFACE
-local function createStoreBypass()
-    -- Find the original Ghost Bart image in the store
+-- 2. REBUILD THE STORE ICON WITH BYPASS
+local function buildStoreBypass()
     local storeIcon = nil
     for _, v in pairs(storeSkins:GetChildren()) do
         if v.Name:find("Ghost") or v:FindFirstChild(target) then
@@ -30,21 +27,24 @@ local function createStoreBypass()
 
     if storeIcon then
         local newIcon = storeIcon:Clone()
-        newIcon.Name = "GhostBypassIcon"
-        newIcon.Parent = invSkins -- Put it in inventory so you can find it easily
+        newIcon.Name = "GhostBypass"
+        newIcon.Parent = invSkins
         
-        -- Find the "Buy" button inside that icon and inject our Lag Bypass
+        -- Fix the UI so it doesn't break scrolling
+        for _, obj in pairs(newIcon:GetDescendants()) do
+            if obj:IsA("UIConstraint") then obj:Destroy() end
+        end
+        newIcon.Size = UDim2.new(0, 110, 0, 110)
+
         local buyBtn = newIcon:FindFirstChild("Buy") or newIcon:FindFirstChildOfClass("TextButton")
         if buyBtn then
-            buyBtn.Text = "BUY!! (LAG BYPASS)"
+            buyBtn.Text = "BUY!! (555 Q)"
             buyBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-            buyBtn.Active = true
             
             buyBtn.MouseButton1Click:Connect(function()
-                buyBtn.Text = "PURCHASING..."
-                
-                -- The Lag Bypass Hammer: Sends 30 requests to force a currency deduction
-                for i = 1, 30 do
+                buyBtn.Text = "BYPASSING..."
+                -- Sending 50 rapid requests to force a Quidz deduction
+                for i = 1, 50 do
                     task.spawn(function()
                         for _, remote in pairs(game:GetDescendants()) do
                             if remote:IsA("RemoteEvent") and (remote.Name:lower():find("buy") or remote.Name:lower():find("purchase")) then
@@ -52,4 +52,13 @@ local function createStoreBypass()
                             end
                         end
                     end)
-                    task.wait(0.
+                    task.wait(0.01)
+                end
+                buyBtn.Text = "BOUGHT!"
+                buyBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+            end)
+        end
+    end
+end
+
+buildStoreBypass()
