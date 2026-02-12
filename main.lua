@@ -1,54 +1,62 @@
 local player = game.Players.LocalPlayer
 local targetSkin = "Ghost Bart"
 
--- 1. Persistent Value Unlocker
+-- Paths from your Explorer
+local invSkins = player.PlayerGui.main.Seperate.Inventory.frame.Frame.Skins
+local storeSkins = player.PlayerGui.main.Seperate.Store.frame.Frame.Skins
+
+print("--- ScriptRo: PERMANENT OWNED STATUS ACTIVE ---")
+
+-- 1. LOCK THE VALUE TO "owned"
 task.spawn(function()
-    while task.wait(0.5) do
+    while true do
         pcall(function()
-            local skinVal = player:WaitForChild("skins"):WaitForChild("Bart"):FindFirstChild(targetSkin)
-            if skinVal and skinVal.Value ~= "unlocked" then
-                skinVal.Value = "unlocked"
+            for _, v in pairs(player:GetDescendants()) do
+                -- We target the specific value you found in Dex
+                if v.Name == targetSkin and v:IsA("StringValue") then
+                    if v.Value ~= "owned" then
+                        v.Value = "owned"
+                        print("ScriptRo: Ghost Bart is now OWNED!")
+                    end
+                end
             end
         end)
+        task.wait(0.5) -- Checks every half second to keep it "owned"
     end
 end)
 
--- 2. Grid Icon Hijacker (Makes it selectable)
-local function refreshIcons()
-    pcall(function()
-        local scrollingFrame = player.PlayerGui.main.Seperate.Skins.Barts
-        for _, icon in pairs(scrollingFrame:GetChildren()) do
-            -- Look for the Ghost Bart icon
-            if icon.Name == targetSkin or (icon:FindFirstChild("Title") and icon.Title.Text == targetSkin) then
-                
-                -- Hide the Lock/Price overlays so you can see the skin
-                if icon:FindFirstChild("Lock") then icon.Lock.Visible = false end
-                if icon:FindFirstChild("Price") then icon.Price.Visible = false end
-                if icon:FindFirstChild("Locked") then icon.Locked.Visible = false end
-                
-                -- Visual feedback that it's unlocked
-                icon.BackgroundColor3 = Color3.fromRGB(85, 255, 127) -- Light Green
-            end
+-- 2. CLONE TO INVENTORY
+local function forceInventory()
+    -- Wait for the store to be loaded
+    local storeIcon = nil
+    for _, v in pairs(storeSkins:GetChildren()) do
+        if v.Name:find("Ghost") or v:FindFirstChild(targetSkin) then
+            storeIcon = v
+            break
         end
-    end)
+    end
+
+    if storeIcon then
+        -- Remove the old "Offsale" icon if it's there
+        if invSkins:FindFirstChild(targetSkin) then
+            invSkins[targetSkin]:Destroy()
+        end
+        
+        -- Inject the new "Owned" icon
+        local newIcon = storeIcon:Clone()
+        newIcon.Name = targetSkin
+        newIcon.Parent = invSkins
+        
+        -- Set the Button to green "EQUIPPED" like Frozen Bart
+        local btn = newIcon:FindFirstChildOfClass("TextButton") or newIcon:FindFirstChild("Buy")
+        if btn then
+            btn.Text = "EQUIPPED"
+            btn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+        end
+        print("ScriptRo: Icon injected into Inventory!")
+    end
 end
 
--- 3. The "Selection" panel Fixer (Hides the Buy button if it appears)
-task.spawn(function()
-    while task.wait(0.2) do
-        refreshIcons()
-        pcall(function()
-            local selectedPanel = player.PlayerGui.main.Seperate.Skins.Selected
-            local buyBtn = selectedPanel:FindFirstChild("Buy")
-            local priceTxt = selectedPanel:FindFirstChild("TextLabel")
-            
-            -- If Ghost Bart is selected, we hide the Buy button so it doesn't block you
-            if buyBtn and buyBtn.Visible then
-                buyBtn.Visible = false
-                if priceTxt then priceTxt.Text = "OWNED" end
-            end
-        end)
-    end
-end)
-
-print("ScriptRo: Selection Mode Active. Just click the Ghost Bart icon in the grid!")
+-- Run injection once, then again if you open/close menus
+forceInventory()
+player.PlayerGui.main.Seperate.Inventory.Changed:Connect(forceInventory)
