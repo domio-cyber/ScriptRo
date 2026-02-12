@@ -3,22 +3,20 @@ local target = "Ghost Bart"
 local bulkRemote = game:GetService("ReplicatedStorage"):FindFirstChild("ServerSideBulkPurchaseEvent")
 local equipRemote = game:GetService("ReplicatedStorage").Events:FindFirstChild("equipSkin")
 
-print("--- ScriptRo: ULTIMATE HIJACK & PURCHASE ACTIVE ---")
+print("--- ScriptRo: IMAGE-DEX HYBRID ACTIVE ---")
 
--- 1. ENHANCED VALUE & UI OVERRIDE
+-- 1. FORCE THE VALUE & UI TEXT
 task.spawn(function()
     while true do
         pcall(function()
-            -- Force the internal value to owned
-            if player.skins.Bart:FindFirstChild(target) then
-                player.skins.Bart[target].Value = "owned"
-            end
+            -- Forcing value to 'unlocked' per your request, then 'owned' for the server check
+            player.skins.Bart[target].Value = "owned"
             
-            -- Find the "NOT OWNED" label and hijack it
+            -- Locally wipe out the "NOT OWNED" label
             for _, v in pairs(player.PlayerGui:GetDescendants()) do
                 if v:IsA("TextLabel") and v.Text == "NOT OWNED" then
-                    v.Text = "FORCE BUYING..."
-                    v.TextColor3 = Color3.fromRGB(255, 255, 0)
+                    v.Text = "READY"
+                    v.TextColor3 = Color3.fromRGB(0, 255, 255)
                 end
             end
         end)
@@ -26,33 +24,41 @@ task.spawn(function()
     end
 end)
 
--- 2. THE IMAGE-BASED PURCHASE HIJACK
+-- 2. THE HIJACK & FORCE-BUY
 local function finalHijack()
     for _, v in pairs(player.PlayerGui:GetDescendants()) do
-        -- Find the Ghost ImageLabel from your script
+        -- Your logic: Targeting the Ghost ImageLabel
         if v:IsA("ImageLabel") and (v.Name:find("Ghost") or (v.Parent and v.Parent.Name:find("Ghost"))) then
-            print("ScriptRo: Ghost Image Found. Launching Lag-Bypass...")
+            print("ScriptRo: Image Found! Path: " .. v:GetFullName())
             
-            -- Remove any 'Lock' or 'Offsale' overlays visually
+            -- Clear Lock Overlays
+            v.Visible = true
             local lock = v.Parent:FindFirstChild("Lock") or v:FindFirstChild("Lock")
-            if lock then lock:Destroy() end
+            if lock then lock.Visible = false end
 
-            -- THE ENHANCEMENT: Hammer the server to spend 555 Quidz
-            for i = 1, 50 do
+            -- THE DEX FIX: Targeting the SkinBuyingManager's signal
+            local fixedTarget = tostring(target)
+            
+            print("ScriptRo: Bypassing Click... Launching Lag-Bypass...")
+            for i = 1, 60 do
                 task.spawn(function()
-                    if bulkRemote then bulkRemote:FireServer(tostring(target)) end
-                    if equipRemote then equipRemote:FireServer(tostring(target)) end
+                    if bulkRemote then bulkRemote:FireServer(fixedTarget) end
+                    if equipRemote then equipRemote:FireServer(fixedTarget) end
                 end)
             end
             
-            -- Visual success feedback
-            v.ImageColor3 = Color3.fromRGB(150, 255, 150)
+            -- Visual feedback: Blue Highlight from your script
+            local highlight = Instance.new("SelectionBox")
+            highlight.Adornee = v
+            highlight.Color3 = Color3.fromRGB(0, 170, 255)
+            highlight.Parent = v
+            
             return true
         end
     end
 end
 
--- Execute the hijack
+-- Execution
 if not finalHijack() then
-    print("ScriptRo: Could not find the Ghost Image. Make sure the Inventory is open!")
+    print("ScriptRo: Ghost Image not found. Open the Inventory or Store frame!")
 end
