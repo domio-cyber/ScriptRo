@@ -2,53 +2,63 @@ local player = game.Players.LocalPlayer
 local target = "Ghost Bart"
 local bulkRemote = game:GetService("ReplicatedStorage"):FindFirstChild("ServerSideBulkPurchaseEvent")
 
-print("--- ScriptRo: RESTORED ORIGINAL LOGIC ---")
+print("--- ScriptRo: STORE SLOT HIJACK ACTIVE ---")
 
--- 1. YOUR ORIGINAL LOGIC: Force the Value
-pcall(function()
-    player.skins.Bart[target].Value = "unlocked"
-end)
-
--- 2. YOUR ORIGINAL LOGIC: Find and Hijack the Image
-local function findAndBuyGhost()
-    for _, v in pairs(player.PlayerGui:GetDescendants()) do
-        if v:IsA("ImageLabel") and (v.Name:find("Ghost") or (v.Parent and v.Parent.Name:find("Ghost"))) then
-            print("ScriptRo: Found the Image! Path: " .. v:GetFullName())
+-- 1. TARGET THE STORE SLOTS
+local function hijackStoreSlot()
+    pcall(function()
+        -- Path found in your Dex: Store -> frame -> Frame -> Skins
+        local storeSkins = player.PlayerGui.main.Seperate.Store.frame.Frame.Skins
+        local firstSlot = storeSkins:FindFirstChildOfClass("Frame") or storeSkins:FindFirstChildOfClass("ImageButton")
+        
+        if firstSlot then
+            print("ScriptRo: Slot Found. Forcing Ghost Bart...")
             
-            -- Your logic: Force visible and clear locks
-            v.Visible = true
-            if v.Parent:IsA("GuiObject") then v.Parent.Visible = true end
-            local lock = v.Parent:FindFirstChild("Lock") or v:FindFirstChild("Lock")
-            if lock then lock.Visible = false end
-
-            -- ADDED BUY TRIGGER: Creating the click area
-            local buyTrigger = Instance.new("TextButton")
-            buyTrigger.Size = UDim2.new(1, 0, 1, 0)
-            buyTrigger.BackgroundTransparency = 1
-            buyTrigger.Text = ""
-            buyTrigger.Parent = v
+            -- Change the Name and Text
+            firstSlot.Name = target
+            local label = firstSlot:FindFirstChildOfClass("TextLabel") or firstSlot:FindFirstChild("Name")
+            if label then label.Text = target end
             
-            buyTrigger.MouseButton1Click:Connect(function()
-                print("ScriptRo: Clicked! Sending 555 Quidz Purchase...")
-                -- Fire the bulk purchase remote with the target name
-                if bulkRemote then
-                    bulkRemote:FireServer(tostring(target))
+            -- Change the Image to Ghost Bart's icon
+            local icon = firstSlot:FindFirstChildOfClass("ImageLabel") or firstSlot
+            if icon:IsA("ImageLabel") or icon:IsA("ImageButton") then
+                icon.Image = "rbxassetid://15214040713" -- Ghost Bart Asset ID
+            end
+
+            -- 2. MAKE IT BUYABLE
+            -- We find the 'Buy' button in the Selected frame or on the slot itself
+            local buyBtn = firstSlot:FindFirstChild("Buy") or firstSlot:FindFirstChildOfClass("TextButton")
+            
+            if not buyBtn then
+                -- If no button exists, we make the whole slot a button
+                buyBtn = Instance.new("TextButton")
+                buyBtn.Size = UDim2.new(1, 0, 1, 0)
+                buyBtn.BackgroundTransparency = 1
+                buyBtn.Text = ""
+                buyBtn.Parent = firstSlot
+            end
+
+            buyBtn.MouseButton1Click:Connect(function()
+                print("ScriptRo: Attempting to buy " .. target .. " for 555 Quidz...")
+                
+                -- Hammer the remote 30 times with the string to force it
+                for i = 1, 30 do
+                    task.spawn(function()
+                        if bulkRemote then 
+                            bulkRemote:FireServer(tostring(target)) 
+                        end
+                    end)
                 end
-                -- Your visual feedback
-                v.ImageColor3 = Color3.fromRGB(0, 255, 0)
+                
+                -- Visual Feedback
+                firstSlot.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
             end)
             
-            -- Your visual feedback: Blue highlight
-            local highlight = Instance.new("SelectionBox")
-            highlight.Adornee = v
-            highlight.Color3 = Color3.fromRGB(0, 170, 255)
-            highlight.Parent = v
-            
-            return true
+            print("ScriptRo: Ghost Bart is now in the store! Click the slot to buy.")
+        else
+            print("ScriptRo: Could not find any slots in the store. Is the Store menu open?")
         end
-    end
+    end)
 end
 
-if not findAndBuyGhost() then
-    print("ScriptRo: Could not find the Image. Make sure the menu is open!")
-end
+hijackStoreSlot()
