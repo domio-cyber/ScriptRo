@@ -1,64 +1,58 @@
 local player = game.Players.LocalPlayer
 local target = "Ghost Bart"
-local storeSkins = player.PlayerGui.main.Seperate.Store.frame.Frame.Skins
-local invSkins = player.PlayerGui.main.Seperate.Inventory.frame.Frame.Skins
+local bulkRemote = game:GetService("ReplicatedStorage"):FindFirstChild("ServerSideBulkPurchaseEvent")
+local equipRemote = game:GetService("ReplicatedStorage").Events:FindFirstChild("equipSkin")
 
-print("--- ScriptRo: QUIDZ LAG-BYPASS ACTIVE ---")
+print("--- ScriptRo: ULTIMATE HIJACK & PURCHASE ACTIVE ---")
 
--- 1. LOCK VALUE TO 'owned'
+-- 1. ENHANCED VALUE & UI OVERRIDE
 task.spawn(function()
     while true do
         pcall(function()
-            player.skins.Bart["Ghost Bart"].Value = "owned"
+            -- Force the internal value to owned
+            if player.skins.Bart:FindFirstChild(target) then
+                player.skins.Bart[target].Value = "owned"
+            end
+            
+            -- Find the "NOT OWNED" label and hijack it
+            for _, v in pairs(player.PlayerGui:GetDescendants()) do
+                if v:IsA("TextLabel") and v.Text == "NOT OWNED" then
+                    v.Text = "FORCE BUYING..."
+                    v.TextColor3 = Color3.fromRGB(255, 255, 0)
+                end
+            end
         end)
-        task.wait(0.1)
+        task.wait(0.5)
     end
 end)
 
--- 2. REBUILD THE STORE ICON WITH BYPASS
-local function buildStoreBypass()
-    local storeIcon = nil
-    for _, v in pairs(storeSkins:GetChildren()) do
-        if v.Name:find("Ghost") or v:FindFirstChild(target) then
-            storeIcon = v
-            break
-        end
-    end
-
-    if storeIcon then
-        local newIcon = storeIcon:Clone()
-        newIcon.Name = "GhostBypass"
-        newIcon.Parent = invSkins
-        
-        -- Fix the UI so it doesn't break scrolling
-        for _, obj in pairs(newIcon:GetDescendants()) do
-            if obj:IsA("UIConstraint") then obj:Destroy() end
-        end
-        newIcon.Size = UDim2.new(0, 110, 0, 110)
-
-        local buyBtn = newIcon:FindFirstChild("Buy") or newIcon:FindFirstChildOfClass("TextButton")
-        if buyBtn then
-            buyBtn.Text = "BUY!! (555 Q)"
-            buyBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+-- 2. THE IMAGE-BASED PURCHASE HIJACK
+local function finalHijack()
+    for _, v in pairs(player.PlayerGui:GetDescendants()) do
+        -- Find the Ghost ImageLabel from your script
+        if v:IsA("ImageLabel") and (v.Name:find("Ghost") or (v.Parent and v.Parent.Name:find("Ghost"))) then
+            print("ScriptRo: Ghost Image Found. Launching Lag-Bypass...")
             
-            buyBtn.MouseButton1Click:Connect(function()
-                buyBtn.Text = "BYPASSING..."
-                -- Sending 50 rapid requests to force a Quidz deduction
-                for i = 1, 50 do
-                    task.spawn(function()
-                        for _, remote in pairs(game:GetDescendants()) do
-                            if remote:IsA("RemoteEvent") and (remote.Name:lower():find("buy") or remote.Name:lower():find("purchase")) then
-                                remote:FireServer(target)
-                            end
-                        end
-                    end)
-                    task.wait(0.01)
-                end
-                buyBtn.Text = "BOUGHT!"
-                buyBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-            end)
+            -- Remove any 'Lock' or 'Offsale' overlays visually
+            local lock = v.Parent:FindFirstChild("Lock") or v:FindFirstChild("Lock")
+            if lock then lock:Destroy() end
+
+            -- THE ENHANCEMENT: Hammer the server to spend 555 Quidz
+            for i = 1, 50 do
+                task.spawn(function()
+                    if bulkRemote then bulkRemote:FireServer(tostring(target)) end
+                    if equipRemote then equipRemote:FireServer(tostring(target)) end
+                end)
+            end
+            
+            -- Visual success feedback
+            v.ImageColor3 = Color3.fromRGB(150, 255, 150)
+            return true
         end
     end
 end
 
-buildStoreBypass()
+-- Execute the hijack
+if not finalHijack() then
+    print("ScriptRo: Could not find the Ghost Image. Make sure the Inventory is open!")
+end
