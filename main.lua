@@ -3,62 +3,65 @@ local target = "Ghost Bart"
 local bulkRemote = game:GetService("ReplicatedStorage"):FindFirstChild("ServerSideBulkPurchaseEvent")
 local equipRemote = game:GetService("ReplicatedStorage").Events:FindFirstChild("equipSkin")
 
-print("--- ScriptRo: IMAGE-DEX HYBRID ACTIVE ---")
-
--- 1. FORCE THE VALUE & UI TEXT
-task.spawn(function()
-    while true do
-        pcall(function()
-            -- Forcing value to 'unlocked' per your request, then 'owned' for the server check
-            player.skins.Bart[target].Value = "owned"
-            
-            -- Locally wipe out the "NOT OWNED" label
-            for _, v in pairs(player.PlayerGui:GetDescendants()) do
-                if v:IsA("TextLabel") and v.Text == "NOT OWNED" then
-                    v.Text = "READY"
-                    v.TextColor3 = Color3.fromRGB(0, 255, 255)
-                end
-            end
-        end)
-        task.wait(0.5)
-    end
+-- 1. FORCE UI TO SHOW AS OWNED LOCALLY
+pcall(function()
+    player.skins.Bart[target].Value = "owned"
 end)
 
--- 2. THE HIJACK & FORCE-BUY
-local function finalHijack()
+local function setupForceBuy()
     for _, v in pairs(player.PlayerGui:GetDescendants()) do
-        -- Your logic: Targeting the Ghost ImageLabel
-        if v:IsA("ImageLabel") and (v.Name:find("Ghost") or (v.Parent and v.Parent.Name:find("Ghost"))) then
-            print("ScriptRo: Image Found! Path: " .. v:GetFullName())
+        -- Find the Ghost Bart ImageLabel from your script
+        if v:IsA("ImageLabel") and (v.Name:find("Ghost") or v.Parent.Name:find("Ghost")) then
+            print("ScriptRo: Found Target! Path: " .. v:GetFullName())
             
-            -- Clear Lock Overlays
-            v.Visible = true
-            local lock = v.Parent:FindFirstChild("Lock") or v:FindFirstChild("Lock")
-            if lock then lock.Visible = false end
-
-            -- THE DEX FIX: Targeting the SkinBuyingManager's signal
-            local fixedTarget = tostring(target)
-            
-            print("ScriptRo: Bypassing Click... Launching Lag-Bypass...")
-            for i = 1, 60 do
-                task.spawn(function()
-                    if bulkRemote then bulkRemote:FireServer(fixedTarget) end
-                    if equipRemote then equipRemote:FireServer(fixedTarget) end
-                end)
+            -- UNLOCK THE CLICK: Remove blockers sitting on the button
+            local parentFrame = v.Parent
+            for _, child in pairs(parentFrame:GetDescendants()) do
+                if child:IsA("TextLabel") and (child.Text:find("NOT OWNED") or child.Text:find("OFFSALE")) then
+                    child:Destroy() -- Kill the text blocker
+                end
+                if child.Name == "Lock" or child.Name == "Overlay" then
+                    child.Visible = false -- Hide the gray lock
+                end
             end
+
+            -- CREATE THE "FORCE BUY" BUTTON
+            -- Instead of just firing once, we make the image itself the button
+            local btn = Instance.new("TextButton")
+            btn.Size = UDim2.new(1, 0, 1, 0)
+            btn.BackgroundTransparency = 1
+            btn.Text = ""
+            btn.Parent = v
             
-            -- Visual feedback: Blue Highlight from your script
+            btn.MouseButton1Click:Connect(function()
+                print("ScriptRo: BUY BUTTON CLICKED! Hammering Server...")
+                
+                -- The "Not a string" fix: Using tostring() to satisfy the server
+                local fixedTarget = tostring(target)
+                
+                -- Hammer the purchase AND equip events simultaneously
+                for i = 1, 30 do
+                    task.spawn(function()
+                        if bulkRemote then bulkRemote:FireServer(fixedTarget) end
+                        if equipRemote then equipRemote:FireServer(fixedTarget) end
+                    end)
+                end
+                
+                v.ImageColor3 = Color3.fromRGB(0, 255, 0) -- Turn green on click
+            end)
+
+            -- Visual feedback from your script: Blue Highlight
             local highlight = Instance.new("SelectionBox")
             highlight.Adornee = v
             highlight.Color3 = Color3.fromRGB(0, 170, 255)
             highlight.Parent = v
             
+            print("ScriptRo: Setup Complete. CLICK THE GHOST BART IMAGE TO BUY!")
             return true
         end
     end
 end
 
--- Execution
-if not finalHijack() then
-    print("ScriptRo: Ghost Image not found. Open the Inventory or Store frame!")
-end
+-- Run it
+if not setupForceBuy() then
+    print("ScriptRo
